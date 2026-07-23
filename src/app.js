@@ -3,6 +3,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const tasksRouter = require('./routes/tasks');
+const path = require('path')
 
 const app = express();
 
@@ -21,5 +22,6 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/tasks', tasksRouter);
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 module.exports = app;

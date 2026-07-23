@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskFlow</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    header {
+      max-width: 800px;
+      margin: 0 auto 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    header h1 span { color: #4f46e5; }
+
+    #api-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #d1d5db;
+    }
+    .status-dot.online { background: #10b981; }
+    .status-dot.offline { background: #ef4444; }
+
+    main { max-width: 800px; margin: 0 auto; }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      margin-bottom: 1rem;
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #374151;
+    }
+
+    #task-list { list-style: none; }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .task-item:last-child { border-bottom: none; }
+
+    .task-title {
+      font-weight: 500;
+      color: #111827;
+      margin-bottom: 2px;
+    }
+
+    .task-desc {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 99px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge.pending    { background: #fef3c7; color: #92400e; }
+    .badge.in_progress { background: #dbeafe; color: #1e40af; }
+    .badge.done       { background: #d1fae5; color: #065f46; }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #9ca3af;
+    }
+    .empty-state p { font-size: 0.95rem; }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Task<span>Flow</span></h1>
+    <div id="api-status">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Connecting...</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>All Tasks</h2>
+      <ul id="task-list">
+        <li class="loading">Loading tasks...</li>
+      </ul>
+    </div>
+  </main>
+
+  <script>
+    // ── Configuration ──────────────────────────────────────────────────
+    // In development the API runs on port 3000.
+    // In production Nginx serves both the frontend and the API,
+    // so we use a relative path.
+    const API_BASE = window.location.hostname === 'localhost'
+      ? 'http://localhost:3000'
+      : '';
+
+    // ── Health Check ───────────────────────────────────────────────────
+    async function checkHealth() {
+      try {
+        const res = await fetch(`${API_BASE}/health`);
+        const data = await res.json();
+        document.getElementById('status-dot').className = 'status-dot online';
+        document.getElementById('status-text').textContent =
+          `API online · v${data.version}`;
+      } catch {
+        document.getElementById('status-dot').className = 'status-dot offline';
+        document.getElementById('status-text').textContent = 'API offline';
+      }
+    }
+
+    // ── Render Tasks ───────────────────────────────────────────────────
+    function renderTasks(tasks) {
+      const list = document.getElementById('task-list');
+
+      if (tasks.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <p>No tasks yet. Add one to get started.</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = tasks.map(task => `
+        <li class="task-item" data-id="${task.id}">
+          <div>
+            <div class="task-title">${escapeHtml(task.title)}</div>
+            ${task.description
+              ? `<div class="task-desc">${escapeHtml(task.description)}</div>`
+              : ''}
+          </div>
+          <span class="badge ${task.status}">${task.status.replace('_', ' ')}</span>
+        </li>
+      `).join('');
+    }
+
+    // ── Fetch Tasks ────────────────────────────────────────────────────
+    async function loadTasks() {
+      try {
+        const res = await fetch(`${API_BASE}/tasks`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const tasks = await res.json();
+        renderTasks(tasks);
+      } catch (err) {
+        document.getElementById('task-list').innerHTML = `
+          <div class="empty-state">
+            <p>Could not load tasks. Is the API running?</p>
+          </div>`;
+      }
+    }
+
+    // ── Utility ────────────────────────────────────────────────────────
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(str));
+      return d.innerHTML;
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────
+    checkHealth();
+    loadTasks();
+  </script>
+</body>
+</html>
