@@ -1,0 +1,36 @@
+{
+    "Status": "unhealthy",
+    "FailingStreak": 45,
+    "Log": [
+        {
+            "Start": "2026-07-24T00:21:15.228210673+01:00",
+            "End": "2026-07-24T00:21:15.351600199+01:00",
+            "ExitCode": 1,
+            "Output": "wget: can't connect to remote host: Connection refused\n"
+        },
+        {
+            "Start": "2026-07-24T00:21:45.352597145+01:00",
+            "End": "2026-07-24T00:21:45.420328755+01:00",
+            "ExitCode": 1,
+            "Output": "wget: can't connect to remote host: Connection refused\n"
+        },
+        {
+            "Start": "2026-07-24T00:22:15.421413049+01:00",
+            "End": "2026-07-24T00:22:15.519372154+01:00",
+            "ExitCode": 1,
+            "Output": "wget: can't connect to remote host: Connection refused\n"
+        },
+        {
+            "Start": "2026-07-24T00:22:45.52008583+01:00",
+            "End": "2026-07-24T00:22:45.610173557+01:00",
+            "ExitCode": 1,
+            "Output": "wget: can't connect to remote host: Connection refused\n"
+        },
+        {
+            "Start": "2026-07-24T00:23:15.611184682+01:00",
+            "End": "2026-07-24T00:23:15.692482472+01:00",
+            "ExitCode": 1,
+            "Output": "wget: can't connect to remote host: Connection refused\n"
+        }
+    ]
+}
